@@ -7,7 +7,7 @@
 
 #usage : print out help message
 usage() {
-echo -n -e "\nUsage: sahw2.sh {--sha256 hashes ... | --md5 hashes ...}-i files ...\n\n--sha256: SHA256 hashes to validate input files.\n--md5:MD5 hashes to validate input files.\n-i: Input files.\n"
+echo -n -e "\nUsage: sahw2.sh {--sha256 hashes ... | --md5 hashes ...} -i files ...\n\n--sha256: SHA256 hashes to validate input files.\n--md5: MD5 hashes to validate input files.\n-i: Input files.\n"
 }
 
 #
@@ -45,7 +45,6 @@ while [ "$#" -gt 0 ]; do
 			md5=1
 			shift
 			while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
-				echo "$1"
 				hashes+=("$1")
 				hashnum=$(( hashnum + 1 ))
 				shift
@@ -55,7 +54,6 @@ while [ "$#" -gt 0 ]; do
 			sha256=1
 			shift
 			while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
-				echo "$1"
 				hashes+=("$1")
 				hashnum=$(( hashnum + 1 ))
 				shift
@@ -63,7 +61,7 @@ while [ "$#" -gt 0 ]; do
 		;;	
 		*) #invaid options inputed
 			if [[ "$1" != "-md5" ]] || [[ "$1" != "-sha256" ]]; then
-			echo "Error: Invalid arguments." 1>&2
+			echo -n "Error: Invalid arguments." 1>&2
 			usage
 			exit 1
 			fi
@@ -72,17 +70,12 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ $hashnum -ne $filenum ]; then
-	echo "Error: Invalid values." 1>&2
+	echo -n "Error: Invalid values." 1>&2
 	exit 2
 fi
 	
 if [ $md5 -eq 1 ] && [ $sha256 -eq 1 ]; then
-	echo "Error: Only one type of hash function is allowed." 1>&2
+	echo -n "Error: Only one type of hash function is allowed." 1>&2
 	exit 3
 fi
-
-
-
-
-
 
