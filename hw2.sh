@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/bash -x
 
 #
 # functions
@@ -16,8 +16,8 @@ echo -n -e "\nUsage: sahw2.sh {--sha256 hashes ... | --md5 hashes ...} -i files 
 
 md5=0
 sha256=0
-filenum=0
-hashnum=0
+declare -i filenum=0
+declare -i hashnum=0
 files=()
 hashes=()
 
@@ -36,7 +36,8 @@ while [ "$#" -gt 0 ]; do
 		-i) #input files
 			shift
 			while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
-				files+=("$1")
+				echo "$1"
+                files+=("$1")
 				filenum=$(( filenum + 1 ))
 				shift
 			done
@@ -61,7 +62,7 @@ while [ "$#" -gt 0 ]; do
 		;;	
 		*) #invaid options inputed
 			if [[ "$1" != "-md5" ]] || [[ "$1" != "-sha256" ]]; then
-			echo -n "Error: Invalid arguments." 1>&2
+			echo "Error: Invalid arguments." 1>&2
 			usage
 			exit 1
 			fi
@@ -70,12 +71,29 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ $hashnum -ne $filenum ]; then
-	echo -n "Error: Invalid values." 1>&2
+	echo "Error: Invalid values." 1>&2
 	exit 2
 fi
 	
 if [ $md5 -eq 1 ] && [ $sha256 -eq 1 ]; then
-	echo -n "Error: Only one type of hash function is allowed." 1>&2
+	echo "Error: Only one type of hash function is allowed." 1>&2
 	exit 3
 fi
+
+checksum=0
+
+for i in $(seq 0 $(filenum-1)); do
+    if [ $md5 -eq 1 ]; then
+#        echo "${#files[@]}"
+#        echo "${files[$i]}\n"
+        calculated_hash=`md5sum "${files[$i]}" | awk '{print $1}'`
+        echo ${calculated_hash}
+    elif [ $sha256 -eq 1 ]; then
+        echo "hi"    
+    fi
+done
+
+
+
+
 
