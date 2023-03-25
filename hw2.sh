@@ -111,6 +111,46 @@ done
 #
 
 
+for i in $(seq 0 $(($filenum - 1))); do
+    json=0
+    csv=0
+    file_content=`cat ${files[$i]}`
+
+    # JSON
+    error=0
+    
+    err=`echo $file_content | jq '.' 2>&$error; echo $?`    
+#    echo $err
+    if [ $err == 0 ]; then
+        json=1
+    fi
+    
+    # CSV
+    if [[ file_content =~ ^username,password,shell,groups ]]; then
+        csv=1
+    fi
+    
+    #Check File is valid or not
+#    echo $csv
+#    echo $json 
+
+    if [ $csv == 0 ] && [ $json == 0 ]; then
+        echo -n "Error: Invalid file format." 1>&2
+        exit 5     
+    fi
+
+    #Process CSV
+    if ! [ $csv == 0 ]; then    
+ #       echo "yes csv"    
+        
+    #Process JSON
+    else
+ #       echo "hi"        
+    fi
+done
+
+
+
 
 
 
