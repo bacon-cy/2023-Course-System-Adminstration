@@ -11,7 +11,7 @@ echo -n -e "\nUsage: sahw2.sh {--sha256 hashes ... | --md5 hashes ...} -i files 
 }
 
 #
-# parsing options
+# Parsing Options
 #
 
 md5=0
@@ -36,7 +36,6 @@ while [ "$#" -gt 0 ]; do
 		-i) #input files
 			shift
 			while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
-				echo "$1"
                 files+=("$1")
 				filenum=$(( filenum + 1 ))
 				shift
@@ -62,7 +61,7 @@ while [ "$#" -gt 0 ]; do
 		;;	
 		*) #invaid options inputed
 			if [[ "$1" != "-md5" ]] || [[ "$1" != "-sha256" ]]; then
-			echo "Error: Invalid arguments." 1>&2
+			echo -n "Error: Invalid arguments." 1>&2
 			usage
 			exit 1
 			fi
@@ -71,27 +70,45 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ $hashnum -ne $filenum ]; then
-	echo "Error: Invalid values." 1>&2
+	echo -n "Error: Invalid values." 1>&2
 	exit 2
 fi
 	
 if [ $md5 -eq 1 ] && [ $sha256 -eq 1 ]; then
-	echo "Error: Only one type of hash function is allowed." 1>&2
+	echo -n "Error: Only one type of hash function is allowed." 1>&2
 	exit 3
 fi
 
+
+#
+# Hash Validation
+#
+
 checksum=0
 
-for i in $(seq 0 $(filenum-1)); do
+for i in $(seq 0 $(($filenum- 1))); do
     if [ $md5 -eq 1 ]; then
 #        echo "${#files[@]}"
 #        echo "${files[$i]}\n"
-        calculated_hash=`md5sum "${files[$i]}" | awk '{print $1}'`
-        echo ${calculated_hash}
+        cal_hash=`md5sum "${files[$i]}" | awk '{print $1}'`
+#        echo ${calculated_hash}
     elif [ $sha256 -eq 1 ]; then
-        echo "hi"    
+        cal_hash=`sha256sum "${files[$i]}" | awk '{print $1}'`
+    fi
+    
+    #比對cal_hash和hashes[i]是否相同
+    if ! [ $cal_hash == ${hashes[$i]} ]; then
+#        echo "$cal_hash"
+#        echo "${hashes[$i]}"
+        echo -n "Error: Invalid checksum." 1>&2
+        exit 4
     fi
 done
+
+
+#
+# Parsing JSON & CSV
+#
 
 
 
