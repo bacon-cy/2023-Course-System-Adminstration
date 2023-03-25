@@ -1,14 +1,10 @@
 #!/usr/local/bin/bash -x
 
-#
-# functions
-#
-
-
 #usage : print out help message
 usage() {
 echo -n -e "\nUsage: sahw2.sh {--sha256 hashes ... | --md5 hashes ...} -i files ...\n\n--sha256: SHA256 hashes to validate input files.\n--md5: MD5 hashes to validate input files.\n-i: Input files.\n"
 }
+
 
 #
 # Parsing Options
@@ -88,18 +84,13 @@ checksum=0
 
 for i in $(seq 0 $(($filenum- 1))); do
     if [ $md5 -eq 1 ]; then
-#        echo "${#files[@]}"
-#        echo "${files[$i]}\n"
         cal_hash=`md5sum "${files[$i]}" | awk '{print $1}'`
-#        echo ${calculated_hash}
     elif [ $sha256 -eq 1 ]; then
         cal_hash=`sha256sum "${files[$i]}" | awk '{print $1}'`
     fi
     
     #比對cal_hash和hashes[i]是否相同
     if ! [ $cal_hash == ${hashes[$i]} ]; then
-#        echo "$cal_hash"
-#        echo "${hashes[$i]}"
         echo -n "Error: Invalid checksum." 1>&2
         exit 4
     fi
@@ -110,30 +101,24 @@ done
 # Parsing JSON & CSV
 #
 
-
 for i in $(seq 0 $(($filenum - 1))); do
     json=0
     csv=0
     file_content=`cat ${files[$i]}`
 
     # JSON
-    error=0
-    
+    error=0    
     err=`echo $file_content | jq '.' 2>&$error; echo $?`    
-#    echo $err
     if [ $err == 0 ]; then
         json=1
     fi
     
     # CSV
-    if [[ file_content =~ ^username,password,shell,groups ]]; then
+    if [[ ${file_content} =~ ^username,password,shell,groups ]]; then
         csv=1
     fi
     
     #Check File is valid or not
-#    echo $csv
-#    echo $json 
-
     if [ $csv == 0 ] && [ $json == 0 ]; then
         echo -n "Error: Invalid file format." 1>&2
         exit 5     
@@ -141,11 +126,16 @@ for i in $(seq 0 $(($filenum - 1))); do
 
     #Process CSV
     if ! [ $csv == 0 ]; then    
- #       echo "yes csv"    
-        
+#        echo "yes csv"    
+#        echo `awk 'BEGIN {FS=","}{print $1}' ${files[$i]}`    
+        users=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $1}'`)
+        password=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $2}'`)
+        shell=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $3}'`)
+        groups=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $4}'`)
+
     #Process JSON
     else
- #       echo "hi"        
+        echo "hi"        
     fi
 done
 
