@@ -108,7 +108,7 @@ for i in $(seq 0 $(($filenum - 1))); do
 
     # JSON
     tmp=0
-    err=`jq '.' ${files[$i]} | 12>$tmp; echo $?`   
+    err=`jq -e '.' ${files[$i]} >/dev/null; echo $?`   
     if [ $err == 0 ]; then
         json=1
     fi
@@ -135,7 +135,7 @@ for i in $(seq 0 $(($filenum - 1))); do
         users=(`jq '.[] | .username' ${files[$i]} | sed -e 's/\"//g'`)
         password=(`jq '.[] | .password' ${files[$i]} | sed -e 's/\"//g'`)
         shell=(`jq '.[] | .shell' ${files[$i]} | sed -e 's/\"//g'`)
-        echo "hahahaha" + `jq '.[] | .groups' ${files[$i]}`
+        echo "hahahaha" + `jq '.[] | .username' ${files[$i]}`
 #        echo `jq '.[] | .groups' ${files[$i]} | sed -e 's/\"//g' | sed -e 's/\[//g' | sed -e 's/\]//g' | sed -e 's/,//g'`
         groups=`jq '.[] | .groups' ${files[$i]}`
     fi
@@ -143,7 +143,19 @@ for i in $(seq 0 $(($filenum - 1))); do
 done
 
 
+echo -n 'This script will create the following user(s): '
+for u in $users; do
+    echo -n "$u "
+done
+echo 'Do you want to continue? [y/n]:'
 
-
+read ans
+case $ans in
+    n | \n)
+        exit 0  
+    ;;
+    [^y])
+        exit 8
+esac
 
 
