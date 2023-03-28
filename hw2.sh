@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash -x
+#!/usr/local/bin/bash
 
 #usage : print out help message
 usage() {
@@ -100,6 +100,10 @@ done
 #
 # Parsing JSON & CSV
 #
+users=()
+password=()
+shell=()
+groups=()
 
 for i in $(seq 0 $(($filenum - 1))); do
     json=0
@@ -107,8 +111,7 @@ for i in $(seq 0 $(($filenum - 1))); do
     file_content=`cat ${files[$i]}`
 
     # JSON
-    tmp=0
-    err=`jq -e '.' ${files[$i]} >/dev/null; echo $?`   
+    err=`jq -e 'map({username, password, shell, groups})' <${files[$i]} 1>/dev/null 2>&1; echo $?`   
     if [ $err == 0 ]; then
         json=1
     fi
@@ -123,31 +126,28 @@ for i in $(seq 0 $(($filenum - 1))); do
     fi
     #Process CSV
     if ! [ $csv == 0 ]; then    
-#        echo "yes csv"    
-#        echo `awk 'BEGIN {FS=","}{print $1}' ${files[$i]}`    
-        users=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $1}'`)
-        password=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $2}'`)
-        shell=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $3}'`)
-        groups=(`sed -e '1d' ${files[$i]} | awk 'BEGIN {FS=","}{print $4}'`)
+        users+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $1 " "}'`
+        password+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $2 " "}'`
+        shell+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $3 " "}'`
 
     #Process JSON
     else
-        users=(`jq '.[] | .username' ${files[$i]} | sed -e 's/\"//g'`)
-        password=(`jq '.[] | .password' ${files[$i]} | sed -e 's/\"//g'`)
-        shell=(`jq '.[] | .shell' ${files[$i]} | sed -e 's/\"//g'`)
-        echo "hahahaha" + `jq '.[] | .username' ${files[$i]}`
-#        echo `jq '.[] | .groups' ${files[$i]} | sed -e 's/\"//g' | sed -e 's/\[//g' | sed -e 's/\]//g' | sed -e 's/,//g'`
-        groups=`jq '.[] | .groups' ${files[$i]}`
+        users+=`jq '.[] | .username' ${files[$i]} | sed -e 's/\"/ /g'`
+        password+=`jq '.[] | .password' ${files[$i]} | sed -e 's/\"/ /g'`
+        shell+=`jq '.[] | .shell' ${files[$i]} | sed -e 's/\"/ /g'`
     fi
-
+    
+    for u in $user; do
+        echo -n "$u"' ' 
+    done
 done
 
 
 echo -n 'This script will create the following user(s): '
 for u in $users; do
-    echo -n "$u "
+    echo -n "$u"' '
 done
-echo 'Do you want to continue? [y/n]:'
+echo -n 'Do you want to continue? [y/n]:'
 
 read ans
 case $ans in
@@ -157,5 +157,14 @@ case $ans in
     [^y])
         exit 8
 esac
+
+
+
+#
+# Add Users
+#
+
+
+
 
 
