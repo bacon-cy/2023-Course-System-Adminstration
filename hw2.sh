@@ -56,7 +56,7 @@ while [ "$#" -gt 0 ]; do
 			done
 		;;	
 		*) #invaid options inputed
-			if [[ "$1" != "-md5" ]] || [[ "$1" != "-sha256" ]]; then
+			if [[ "$1" != "-md5" ]] && [[ "$1" != "-sha256" ]]; then
 			echo -n "Error: Invalid arguments." 1>&2
 			usage
 			exit 1
@@ -80,17 +80,15 @@ fi
 # Hash Validation
 #
 
-checksum=0
-
 for i in $(seq 0 $(($filenum- 1))); do
     if [ $md5 -eq 1 ]; then
-        cal_hash=`md5sum "${files[$i]}" | awk '{print $1}'`
+        cal_hash=$( md5sum "${files[$i]}" | awk '{print $1}' )
     elif [ $sha256 -eq 1 ]; then
-        cal_hash=`sha256sum "${files[$i]}" | awk '{print $1}'`
+        cal_hash=$( sha256sum "${files[$i]}" | awk '{print $1}' )
     fi
     
     #比對cal_hash和hashes[i]是否相同
-    if ! [ $cal_hash == ${hashes[$i]} ]; then
+    if ! [ "$cal_hash" == "${hashes[$i]}" ]; then
         echo -n "Error: Invalid checksum." 1>&2
         exit 4
     fi
@@ -108,38 +106,26 @@ groups=()
 for i in $(seq 0 $(($filenum - 1))); do
     json=0
     csv=0
-    file_content=`cat ${files[$i]}`
+    file_content=$( cat "${files[$i]}" )
 
-    # JSON
-    err=`jq -e 'map({username, password, shell, groups})' <${files[$i]} 1>/dev/null 2>&1; echo $?`   
-    if [ $err == 0 ]; then
-        json=1
-    fi
-    # CSV
-    if [[ ${file_content} =~ ^username,password,shell,groups ]]; then
-        csv=1
-    fi
     #Check File is valid or not
-    if [ $csv == 0 ] && [ $json == 0 ]; then
+    if [ $( file "${files[$i]}" | grep JSON >/dev/null 2>&1; echo $? ) -eq 0 ]; then
+        json=1
+    elif [ $( file "${files[$i]}" | grep CSV >/dev/null 2>&1; echo $? ) -eq 0 ]; then
+        csv=1
+    else
         echo -n "Error: Invalid file format." 1>&2
-        exit 5     
+        exit 5
     fi
-    #Process CSV
-    if ! [ $csv == 0 ]; then    
-        users+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $1 " "}'`
-        password+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $2 " "}'`
-        shell+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $3 " "}'`
 
+    #Process CSV
+    if [ $csv == 1 ]; then    
+        users+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $1 " "}'`
     #Process JSON
     else
         users+=`jq '.[] | .username' ${files[$i]} | sed -e 's/\"/ /g'`
-        password+=`jq '.[] | .password' ${files[$i]} | sed -e 's/\"/ /g'`
-        shell+=`jq '.[] | .shell' ${files[$i]} | sed -e 's/\"/ /g'`
     fi
     
-    for u in $user; do
-        echo -n "$u"' ' 
-    done
 done
 
 
@@ -164,7 +150,51 @@ esac
 # Add Users
 #
 
+check_user(){
+    user_exist=`id "$1" >/dev/null 2>&1; echo $?`
+    if [ $user_exist -eq 0 ]; then
+        echo -n "Warning: user $1 already exists." 1>&2
+        return 1
+    fi
+    return 0
+}
 
+check_group(){
+    group_exist=`pw group show -a | grep "$1" >/dev/null 2>&1; echo $?`
+    if [ $group_exist -ne 0 ]; then
+        pw groupadd "$1" >/dev/null 2>&1
+    fi
+}
 
+adduser_json(){
+    for user_info in $(jq -c '.[]' "$1");do
+        username=$(jq '.username' <<< "$user_info" | tr -d '"')
+        password=$(jq '.password' <<< "$user_info" | tr -d '"')
+        shell=$(jq '.shell' <<< "$user_info" | tr -d '"')
+        groups=$(jq '.groups' <<< "$user_info" | tr -d '"' | tr -d '[' | tr -d ']' | tr -d ' ' | tr -d '\n')
+        user_exist=$(check_user "$username" | echo $?)
+        if [ $user_exist -eq 1 ]; then
+            continue
+        fi
+        for g in "$(echo $groups | sed -e 's/,/ /g')"; do
+            check_group $g
+        done
+        pw useradd "$username" -G "$groups" -w no
+        echo "$password" | passwd "$username" 
+    done
+}
 
+adduser_csv(){
+    cat $1 | while read -r user_info; do
+        
+    done 
+}
+
+for i in ${files[@]}; do
+    if [ `file $i | grep JSON >/dev/null 2>&1; echo $?` -eq 0 ];then
+        adduser_json $i
+    else
+        adduser_csv $i
+    fi
+done
 
