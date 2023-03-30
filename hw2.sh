@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/local/bin/bash -x
 
 #usage : print out help message
 usage() {
@@ -149,20 +149,21 @@ esac
 #
 # Add Users
 #
-
+user_exist=0
 check_user(){
-    user_exist=`id "$1" >/dev/null 2>&1; echo $?`
-    if [ $user_exist -eq 0 ]; then
-        echo -n "Warning: user $1 already exists." 1>&2
-        return 1
+    exist=`id "$1" >/dev/null 2>&1; echo $?`
+    if [ $exist -eq 0 ]; then
+        echo "Warning: user $1 already exists."
+        user_exist=1
+    else
+        user_exist=0
     fi
-    return 0
 }
 
 check_group(){
     group_exist=`pw group show -a | grep "$1" >/dev/null 2>&1; echo $?`
     if [ $group_exist -ne 0 ]; then
-        pw groupadd "$1" >/dev/null 2>&1
+        pw groupadd "$1"
     fi
 }
 
@@ -172,21 +173,37 @@ adduser_json(){
         password=$(jq '.password' <<< "$user_info" | tr -d '"')
         shell=$(jq '.shell' <<< "$user_info" | tr -d '"')
         groups=$(jq '.groups' <<< "$user_info" | tr -d '"' | tr -d '[' | tr -d ']' | tr -d ' ' | tr -d '\n')
-        user_exist=$(check_user "$username" | echo $?)
+        
+        check_user $username
         if [ $user_exist -eq 1 ]; then
             continue
         fi
-        for g in "$(echo $groups | sed -e 's/,/ /g')"; do
+
+        for g in `echo "$groups" | sed -e 's/,/ /g'`; do
             check_group $g
         done
-        pw useradd "$username" -G "$groups" -w no
-        echo "$password" | passwd "$username" 
+        sudo pw useradd "$username" -m -h - -s "$shell" -G "$groups" >/dev/null 2>&1
+        echo "$password" | pw mod user "$username" -h 0
     done
 }
 
 adduser_csv(){
-    cat $1 | while read -r user_info; do
-        
+    cat $1 | sed -e '1d' | while read -r user_info; do
+        username=$(echo $user_info | cut -f1 -d,)
+        password=$(echo $user_info | cut -f2 -d,)
+        shell=$(echo $user_info | cut -f3 -d,)
+        groups=$(echo $user_info | cut -f4 -d,)
+                
+        check_user "$username"
+        if [ $user_exist -eq 1 ]; then
+            continue
+        fi
+
+        for g in $groups; do
+            check_group $g
+        done
+        sudo pw useradd "$username" -m -h - -s "$shell" -G $(echo $groups | sed -e 's/ /,/g') >/dev/null 2>&1
+        echo "$password" | pw mod user "$username" -h 0
     done 
 }
 
