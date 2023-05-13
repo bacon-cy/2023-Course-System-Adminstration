@@ -23,5 +23,20 @@ To get the name of the hard disk we added, let's first take a screenshot after g
 >   5) 將大小設定為1GB
 >   完成!
 
-### 然後發現沒辦法 zpool create D: 
+### Create Pool
+Create a ZFS RAID-Z pool named `sa_pool` and three 1G disks as devices.
+`sudo zpool create sa_pool raidz /dev/da1 /dev/da2 /dev/da3`
+### Create Dataset
+Make a new ﬁle system called `data` in pool `sa_pool`, set the following properties `compression=lz4`, `copies=2`, `atime=off` and mount it at `/sa_data`.
+`sudo zfs create -o compression=lz4 atime=off copies=2 mountpoint=/sa_data sa_pool/data`
+Also, we can change the properties after create the dataset by using `zfs set`.
+`sudo zfs create sa_pool/data`
+`sudo zfs set compression=lz4 atime=off copies=2 mountpoint=/sa_data sa_pool/data`
+We can use `sudo zfs get all sa_pool/data | less` to check the properties.
+### Change directory owner and group
+commands : 
+- `chown`(8) -- change user owner
+- `chgrp`(1) -- change group owner
+- `-R` : recursively change (for directory)
+
 希望不會被當 :D
