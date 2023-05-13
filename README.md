@@ -49,7 +49,9 @@ example for config file : https://superuser.com/questions/1403121/systemd-logrot
 - Set the number of log ﬁles to rotate to 10. : `rotate <count>`
 - Set the maximum size of each log ﬁle to 1k. : `maxsize <size>` (1k)
 - Move the log ﬁles to the /var/log/fakelog/ directory. : `olddir <dir>`
+
 產生fakelog : <br>
 `sudo ./fakeloggen.py 55 --logrotate`
+### ZFS Managing tools
 
 希望不會被當 :D
