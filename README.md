@@ -37,20 +37,19 @@ commands : <br>
 - `chgrp`(1) -- change group owner
 - `-R` : recursively change (for directory)
 ### Download logrotate
-github of `logrotate` : https://github.com/logrotate/logrotate/tree/master
+github of `logrotate` : https://github.com/logrotate/logrotate/tree/master <br>
 先下載`logrotate`這個套件。<br>
 `sudo pkg install logrotate` <br>
 ### Log Rotate Configutation file
 reference : https://superuser.com/questions/1403121/systemd-logrotate-to-specific-folder , https://adamtheautomator.com/logrotate-linux/<br>
 example for config file : https://superuser.com/questions/1403121/systemd-logrotate-to-specific-folder , https://github.com/logrotate/logrotate/blob/master/examples/logrotate.conf <br><br>
-
-Add a logrotate conﬁguration ﬁle in **`/etc/logrotate.d/fakelog`** <br>
-The program will generate a log ﬁle in **`/var/log/fakelog.log`**, copy the log ﬁles to the **`/var/log/fakelog/`**. <br>
-
+題敘 : 
+- Add a logrotate conﬁguration ﬁle in **`/etc/logrotate.d/fakelog`**
+- The program will generate a log ﬁle in **`/var/log/fakelog.log`**, copy the log ﬁles to the **`/var/log/fakelog/`**.
 - Set the number of log ﬁles to rotate to 10. : `rotate <count>`
 - Set the maximum size of each log ﬁle to 1k. : `maxsize <size>` (1k)
 - Move the log ﬁles to the /var/log/fakelog/ directory. : `olddir <dir>`
-
+產生fakelog : <br>
 `sudo ./fakeloggen.py 55 --logrotate`
 
 希望不會被當 :D
