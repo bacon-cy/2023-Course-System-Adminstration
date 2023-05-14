@@ -53,5 +53,17 @@ example for config file : https://superuser.com/questions/1403121/systemd-logrot
 產生fakelog : <br>
 `sudo ./fakeloggen.py 55 --logrotate`
 ### ZFS Managing tools
+reference : https://github.com/logrotate/logrotate/issues/89, https://gist.github.com/alexjj/4de71ddfae05e974c829
+1. Create `/sa_data/log` directory
+2. python scripting :D
+3. Well Done!
+#### create snapshot
+`zfs snapshot <pool>/<dataset>@<identifier>`
+#### remove snapshot
+`zfs destroy <pool>/<dataset>@<identifier>`
+#### 之後再寫 爽啦:D
+`zfs destroy sa_pool/data@%`
+
+
 
 希望不會被當 :D
