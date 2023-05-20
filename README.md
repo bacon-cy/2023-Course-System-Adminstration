@@ -1,6 +1,7 @@
 # 111-2Course-Network-Adminstration
 
-## hw2.sh
+## Homework 2 - Bash Shell Script
+### hw2.sh
 shell script for hw2 of Network Adminstration in NCKU.
 ## Homework 3 - Log & File Maintenance
 ### Add three 1GB disks 新增三個1GB的硬碟
@@ -61,8 +62,13 @@ reference : https://github.com/logrotate/logrotate/issues/89, https://gist.githu
 `zfs snapshot <pool>/<dataset>@<identifier>`
 #### remove snapshot
 `zfs destroy <pool>/<dataset>@<identifier>`
-#### 之後再寫 爽啦:D
-`zfs destroy sa_pool/data@%`
+#### remove all snapshot
+`zfs destroy <pool>/<dataset>@%`
+#### list snapshot
+`zfs list -r -t snapshot -o name /<mountpoint> | sed -e '1d`
+#### rollback snapshot
+`zfs rollback -r <pool>/<dataset>@<identifier>`
+
 
 
 
