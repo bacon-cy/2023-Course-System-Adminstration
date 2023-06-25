@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash -x
+#!/usr/local/bin/bash
 
 #usage : print out help message
 usage() {
@@ -19,60 +19,60 @@ hashes=()
 
 #沒有給參數
 if [ $# -le 0 ]; then
-	usage
-	exit 1
+        usage
+        exit 1
 fi
 
 while [ "$#" -gt 0 ]; do
-	case "$1" in
-		-h) #help
-			usage
-			exit 0
-		;;
-		-i) #input files
-			shift
-			while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
+        case "$1" in
+                -h) #help
+                        usage
+                        exit 0
+                ;;
+                -i) #input files
+                        shift
+                        while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
                 files+=("$1")
-				filenum=$(( filenum + 1 ))
-				shift
-			done
-		;;
-		--md5)
-			md5=1
-			shift
-			while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
-				hashes+=("$1")
-				hashnum=$(( hashnum + 1 ))
-				shift
-			done
-		;;
-		--sha256)
-			sha256=1
-			shift
-			while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
-				hashes+=("$1")
-				hashnum=$(( hashnum + 1 ))
-				shift
-			done
-		;;	
-		*) #invaid options inputed
-			if [[ "$1" != "-md5" ]] && [[ "$1" != "-sha256" ]]; then
-			echo -n "Error: Invalid arguments." 1>&2
-			usage
-			exit 1
-			fi
-		;;
-	esac
+                                filenum=$(( filenum + 1 ))
+                                shift
+                        done
+                ;;
+                --md5)
+                        md5=1
+                        shift
+                        while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
+                                hashes+=("$1")
+                                hashnum=$(( hashnum + 1 ))
+                                shift
+                        done
+                ;;
+                --sha256)
+                        sha256=1
+                        shift
+                        while [ $# -gt 0 ] && ! [[ "$1" == -* ]]; do
+                                hashes+=("$1")
+                                hashnum=$(( hashnum + 1 ))
+                                shift
+                        done
+                ;;
+                *) #invaid options inputed
+                        if [[ "$1" != "-md5" ]] && [[ "$1" != "-sha256" ]]; then
+                        echo -n "Error: Invalid arguments." 1>&2
+                        usage
+                        exit 1
+                        fi
+                ;;
+        esac
 done
 
 if [ $hashnum -ne $filenum ]; then
-	echo -n "Error: Invalid values." 1>&2
-	exit 2
+        echo -n "Error: Invalid values." 1>&2
+        exit 2
 fi
-	
+
 if [ $md5 -eq 1 ] && [ $sha256 -eq 1 ]; then
-	echo -n "Error: Only one type of hash function is allowed." 1>&2
-	exit 3
+        echo -n "Error: Only one type of hash function is allowed." 1>&2
+        exit 3
 fi
 
 
@@ -86,7 +86,7 @@ for i in $(seq 0 $(($filenum- 1))); do
     elif [ $sha256 -eq 1 ]; then
         cal_hash=$( sha256sum "${files[$i]}" | awk '{print $1}' )
     fi
-    
+
     #比對cal_hash和hashes[i]是否相同
     if ! [ "$cal_hash" == "${hashes[$i]}" ]; then
         echo -n "Error: Invalid checksum." 1>&2
@@ -119,13 +119,13 @@ for i in $(seq 0 $(($filenum - 1))); do
     fi
 
     #Process CSV
-    if [ $csv == 1 ]; then    
+    if [ $csv == 1 ]; then
         users+=`sed -e '1d' ${files[$i]} | awk -F',' '{print $1 " "}'`
     #Process JSON
     else
         users+=`jq '.[] | .username' ${files[$i]} | sed -e 's/\"/ /g'`
     fi
-    
+
 done
 
 
@@ -138,7 +138,7 @@ echo -n 'Do you want to continue? [y/n]:'
 read ans
 case $ans in
     n | \n)
-        exit 0  
+        exit 0
     ;;
     [^y])
         exit 8
@@ -173,7 +173,7 @@ adduser_json(){
         password=$(jq '.password' <<< "$user_info" | tr -d '"')
         shell=$(jq '.shell' <<< "$user_info" | tr -d '"')
         groups=$(jq '.groups' <<< "$user_info" | tr -d '"' | tr -d '[' | tr -d ']' | tr -d ' ' | tr -d '\n')
-        
+
         check_user $username
         if [ $user_exist -eq 1 ]; then
             continue
@@ -193,7 +193,7 @@ adduser_csv(){
         password=$(echo $user_info | cut -f2 -d,)
         shell=$(echo $user_info | cut -f3 -d,)
         groups=$(echo $user_info | cut -f4 -d,)
-                
+
         check_user "$username"
         if [ $user_exist -eq 1 ]; then
             continue
@@ -204,7 +204,7 @@ adduser_csv(){
         done
         sudo pw useradd "$username" -m -h - -s "$shell" -G $(echo $groups | sed -e 's/ /,/g') >/dev/null 2>&1
         echo "$password" | pw mod user "$username" -h 0
-    done 
+    done
 }
 
 for i in ${files[@]}; do
@@ -214,4 +214,3 @@ for i in ${files[@]}; do
         adduser_csv $i
     fi
 done
-
