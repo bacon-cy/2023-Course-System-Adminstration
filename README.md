@@ -1,4 +1,4 @@
-# 111-2Course-Network-Adminstration
+# 111-2Course-System-Adminstration
 
 ## Homework 2 - Bash Shell Script
 ### hw2.sh
